@@ -1,0 +1,195 @@
+﻿@using Starterkit.Models
+@using Starterkit.Models.Question
+@using Starterkit.Services
+@using Starterkit.Shared.Partials.General
+@using Starterkit._keenthemes.libs
+
+@inject IJSRuntime JS
+@inject QuestionService _questionService
+
+	<!--begin::Modal - New Target-->
+	<div class="modal fade" id="kt_modal_new_target" tabindex="-1" aria-hidden="true">
+		<!--begin::Modal dialog-->
+		@* <div class="modal-dialog modal-dialog-centered mw-650px"> *@
+    <div class="modal-dialog modal-fullscreen">
+    
+			<!--begin::Modal content-->
+			<div class="modal-content rounded">
+				<!--begin::Modal header-->
+				<div class="modal-header pb-0 border-0 justify-content-end">
+					<!--begin::Close-->
+					<button class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">Close</button>
+					<!--end::Close-->
+				</div>
+				<!--begin::Modal header-->
+				<!--begin::Modal body-->
+                     <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
+                    <form id="kt_modal_generate_questions_form" class="form">
+                        <div class="mb-13 text-center">
+                            <h1 class="mb-3">Generate Questions</h1>
+                            <div class="text-muted fw-semibold fs-5">
+                                Upload a text file to generate questions
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column mb-8 fv-row">
+                            <label class="fs-6 fw-semibold mb-2">Select a File</label>
+                            <InputFile OnChange="OnFileChange" />
+                        </div>
+
+                        <div class="d-flex flex-column mb-8 fv-row">
+                            <label class="fs-6 fw-semibold mb-2">Number of Questions</label>
+                            <input type="number" class="form-control form-control-solid" @bind="questionSize" />
+                        </div>
+
+                        <div class="d-flex flex-column mb-8 fv-row">
+                            <label class="fs-6 fw-semibold mb-2">Question Type</label>
+                        <select multiple class="form-select form-select-solid" @onchange="HandleQuestionTypeChange">
+                                <option value="FillInTheBlanks">Fill in the Blanks</option>
+                                <option value="TrueFalse">True/False</option>
+                            </select>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="button" class="btn btn-light me-3" @onclick="Close">Cancel</button>
+                            <button type="button" class="btn btn-primary" @onclick="HandleSubmit">
+                                <span class="indicator-label">Generate</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    @if(questionAnswerPairs?.Count > 0)
+                    {
+                        <div class="mt-10">
+                            <h4>Generated Questions</h4>
+                            <ol>
+                                @foreach (var qa in questionAnswerPairs)
+                                {
+                                    <li>
+                                        <div>@qa.question</div>
+                                        @if (qa.question_type == "TrueFalse")
+                                        {
+                                            <div>
+                                                <input type="radio" name="@qa.question_id" value="True"> True
+                                            <input type="radio" name="@qa.question_id" value="False"> False
+                                            </div>
+                                        }
+                                    else if (qa.question_type == "FillInTheBlanks")
+                                        {
+                                        <input type="text" name="@qa.question_id" />
+                                        }
+                                    </li>
+                                }
+                            </ol>
+                            <h4>Correct Answers</h4>
+                            <ul>
+                            @{
+                                var i = 1;
+                            }
+                                @foreach (var qa in questionAnswerPairs)
+                                {
+                                <li>@i. Correct Answer: @qa.answer</li>
+                                i++;
+                            }
+                                
+                            </ul>
+                        <div class="text-center">
+                            <button @onclick="SaveQuestionsAndAnswers" class="btn btn-primary">Save Questions and Answers</button>
+                        </div>
+                        </div>
+                    }
+
+                </div>
+                <!--end::Modal body-->
+			</div>
+			<!--end::Modal content-->
+		</div>
+		<!--end::Modal dialog-->
+	</div>
+	<!--end::Modal - New Target-->
+
+
+@code {
+    [Parameter]
+    public EventCallback OnSubmit { get; set; }
+
+    private string? selectedFile;
+    private int questionSize = 10;
+    private List<string> questionTypes = new List<string>();
+    private List<QuestionAnswerPair> questionAnswerPairs = new List<QuestionAnswerPair>();
+    private bool isLoading = false;
+    private string sessionId;
+    private string fileId;
+
+    public async Task Open()
+    {
+
+        await JS.InvokeVoidAsync("showModal", "kt_modal_new_target");
+        // questionAnswerPairs.Clear();
+        StateHasChanged();
+    }
+
+    public async Task OnInitialisedAsync()
+    {
+
+    }
+
+    public async Task Close()
+    {
+        StateHasChanged();
+    }
+
+    private async Task HandleSubmit()
+    {
+        isLoading = true;
+
+        if (_selectedFile != null)
+        {
+            using var stream = _selectedFile.OpenReadStream(); // Get the file stream
+            var fileName = _selectedFile.Name; // Get the actual file name
+
+            var response = await _questionService.GenerateQuestionsAsync(stream, fileName, questionSize, questionTypes);
+            if (response != null)
+            {
+                fileId = response.file_id.ToString();
+                sessionId = response.session_id;
+                questionAnswerPairs = response.question_answer_pairs;
+            }
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private IBrowserFile _selectedFile;
+
+    private async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File; // Store the selected file
+    }
+
+
+    private async Task SaveQuestionsAndAnswers()
+    {
+        var success = await _questionService.SaveQuestionsAndAnswersAsync(questionAnswerPairs, Convert.ToInt32(fileId));
+        if (success)
+        {
+            await JS.InvokeVoidAsync("alert", "Questions and answers saved successfully.");
+            string msg = "Successfully done";
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Failed to save questions and answers.");
+        }
+    }
+
+    private void HandleQuestionTypeChange(ChangeEventArgs e)
+    {
+        var selectedOptions = e.Value as IEnumerable<string>;
+
+        if (selectedOptions != null)
+        {
+            questionTypes = selectedOptions.ToList();
+        }
+    }
+}

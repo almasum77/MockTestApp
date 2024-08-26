@@ -1,0 +1,137 @@
+﻿@using Starterkit.Models
+@using Starterkit.Models.Question
+@using Starterkit.Services
+@using Starterkit.Shared.Partials.General
+@using Starterkit._keenthemes.libs
+@using Starterkit.Utilities
+@inject IJSRuntime JS
+@inject QuestionService _questionService
+
+<!--begin::Modal - File Wise Questions-->
+<div class="modal fade" id="kt_modal_file_questions" tabindex="-1" aria-hidden="true">
+    <!--begin::Modal dialog-->
+    <div class="modal-dialog modal-fullscreen">
+        <!--begin::Modal content-->
+        <div class="modal-content rounded">
+            <!--begin::Modal header-->
+            <div class="modal-header pb-0 border-0 justify-content-end">
+                <!--begin::Close-->
+                <button class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">Close</button>
+                <!--end::Close-->
+            </div>
+            <!--end::Modal header-->
+            <!--begin::Modal body-->
+            <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
+                <div class="mb-13 text-center">
+                    <h1 class="mb-3">File Questions Summary</h1>
+                    <div class="text-muted fw-semibold fs-5">
+                        Review and manage questions for the selected file
+                    </div>
+                </div>
+
+                @if (fileQuestionSummary != null)
+                {
+                    <div class="mb-8">
+                        <h4>File: @fileQuestionSummary.original_filename</h4>
+                        <p>Uploaded on: @fileQuestionSummary.uploaddate</p>
+                        <p>Total Questions: @fileQuestionSummary.number_of_questions</p>
+                    </div>
+                    <!-- File Content Display -->
+                    <div class="mb-13 text-center">
+                        <h3>@fileQuestionSummary.original_filename</h3>
+                        <p>@fileContent</p>
+                    </div>
+                    <div class="mb-8">
+                        <h4>Questions</h4>
+                        <ul>
+                            @{
+                                var i = 1;
+                            }
+                            @foreach (var question in questions)
+                            {
+                                
+                                <li>
+                                    @(i).
+                                    @if (question.question_type == CommonConstants.QuestionType.TrueFalse.ToString())
+                                    {
+                                        <span> True/Flase :</span>
+                                    }
+                                    else
+                                    {
+                                        <span> </span>
+                                    }
+                                    @question.question
+                                    
+                                </li>
+                                i++;
+                            }
+
+                            
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <p>No questions available for this file.</p>
+                }
+
+                <div class="text-center">
+                    <button class="btn btn-primary" @onclick="Close">Close</button>
+                </div>
+            </div>
+            <!--end::Modal body-->
+        </div>
+        <!--end::Modal content-->
+    </div>
+    <!--end::Modal dialog-->
+</div>
+<!--end::Modal - File Wise Questions-->
+@code {
+    [Parameter]
+    public int FileId { get; set; }
+
+    private string fileContent;
+    private FileQuestionSummary fileQuestionSummary;
+    private List<QuestionAnswerPair> questions = new List<QuestionAnswerPair>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (FileId != 0)
+        {
+            await LoadFileQuestions();
+        }
+    }
+
+    private async Task LoadFileQuestions()
+    {
+        // Fetch file content
+        fileContent = await _questionService.GetFileContentAsync(FileId);
+        // Fetch the file summary and questions from the service
+        fileQuestionSummary = await _questionService.GetFileQuestionSummaryAsync(FileId);
+
+        if (fileQuestionSummary != null)
+        {
+            questions = await _questionService.GetQuestionsForFileAsync(FileId);
+        }
+    }
+
+    public async Task Open(int fileId)
+    {
+        FileId = fileId;
+        await LoadFileQuestions();
+
+        await JS.InvokeVoidAsync("showModal", "kt_modal_file_questions");
+        StateHasChanged();
+    }
+
+    public async Task Close()
+    {
+        await JS.InvokeVoidAsync("hideModal", "kt_modal_file_questions");
+        StateHasChanged();
+    }
+}
+
+
+
+}
+

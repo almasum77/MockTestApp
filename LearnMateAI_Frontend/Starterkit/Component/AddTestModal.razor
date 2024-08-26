@@ -1,0 +1,197 @@
+﻿@page "/test"
+@using Starterkit.Models.Question
+@using Starterkit.Models.Test
+@using Starterkit.Services
+@inject QuestionService _questionService
+@inject TestService _testService
+@inject IJSRuntime JS
+
+
+	<!--begin::Modal - New Target-->
+	<div class="modal fade" id="kt_modal_add_test" tabindex="-1" aria-hidden="true">
+		<!--begin::Modal dialog-->
+		@* <div class="modal-dialog modal-dialog-centered mw-650px"> *@
+    <div class="modal-dialog modal-fullscreen">
+    
+			<!--begin::Modal content-->
+			<div class="modal-content rounded">
+				<!--begin::Modal header-->
+				<div class="modal-header pb-0 border-0 justify-content-end">
+					<!--begin::Close-->
+					<button class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">Close</button>
+					<!--end::Close-->
+				</div>
+				<!--begin::Modal header-->
+				<!--begin::Modal body-->
+            <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
+                @if (questions != null)
+                {
+                    <div class="mb-8">
+                        <h4>File: @fileQuestionSummary.original_filename</h4>
+                        <p>Uploaded on: @fileQuestionSummary.uploaddate</p>
+                        <p>Total Questions: @fileQuestionSummary.number_of_questions</p>
+                    </div>
+                    <!-- File Content Display -->
+                    <div class="mb-13 text-center">
+                        <h3>@fileQuestionSummary.original_filename</h3>
+                        <p>@fileContent</p>
+                    </div>
+                    <div>
+                        <h4>Answer the following questions:</h4>
+                        <EditForm Model="@userAnswers" OnValidSubmit="HandleSubmit">
+                            @for(int i = 0; i < questions.Count; i++)
+                            {
+                                var userAnswer = userAnswers.FirstOrDefault(u => u.question_id == Convert.ToInt32(questions[i].question_id));
+                                string answerValue = userAnswer?.answer ?? string.Empty;
+
+                                <div>
+                                    <p>@(i + 1). @questions[i].question</p>
+
+                                    @if (questions[i].question_type == "TrueFalse")
+                                    {
+                                        <label class="radio radio-accent radio-success">
+                                            <input type="radio"  @onchange="()=>OnRadioChanged(userAnswer, true)" />
+                                            <span></span>
+                                            True
+                                        </label>
+                                        <label class="radio radio-accent radio-success">
+                                            <input type="radio"  @onchange="()=>OnRadioChanged(userAnswer, false)" />
+                                            <span></span>
+                                            False
+                                        </label>
+
+                                    }
+                                    else if (questions[i].question_type == "FillInTheBlanks")
+                                    {
+                                        <InputText @bind-Value="@userAnswer.answer"/>
+                                    }
+                                </div>
+                            }
+
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </EditForm>
+
+                        @if (results != null)
+                        {
+                            <div>
+                                <h4>Results:</h4>
+                                <p>Score: @results.Score/@results.TotalQuestions</p>
+                                <p>Correct Answers: @results.CorrectAnswers</p>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p>Loading...</p>
+                }
+            </div>
+            
+                <!--end::Modal body-->
+			</div>
+			<!--end::Modal content-->
+		</div>
+		<!--end::Modal dialog-->
+	</div>
+	<!--end::Modal - New Target-->
+
+
+
+
+@code {
+    public int fileId { get; set; }  // Receive fileId as a parameter
+
+    private List<QuestionAnswerPairNew> questions;
+    private List<UserAnswerSubmission> userAnswers;
+    private TestResult results;
+    private string quesitonType= string.Empty;
+
+    private string fileContent;
+    private FileQuestionSummary fileQuestionSummary;
+
+    // protected override async Task OnInitializedAsync()
+    // {
+
+    // }
+
+    public async Task Open(int fileId)
+    {
+        this.fileId = fileId;
+        questions = await _questionService.GetQuestionsForFileAsyncForTest(fileId);
+        quesitonType = questions.Select(s => s.question_type).First();
+
+        // Fetch file content
+        fileContent = await _questionService.GetFileContentAsync(fileId);
+        // Fetch the file summary and questions from the service
+        fileQuestionSummary = await _questionService.GetFileQuestionSummaryAsync(fileId);
+
+        // Initialize userAnswers with the correct number of items
+        userAnswers = new List<UserAnswerSubmission>();
+        foreach (var question in questions)
+        {
+            userAnswers.Add(new UserAnswerSubmission { question_id = Convert.ToInt32(question.question_id) });
+        }
+
+        await JS.InvokeVoidAsync("showModal", "kt_modal_add_test");
+        StateHasChanged();
+    }
+
+    public async Task Close()
+    {
+        await JS.InvokeVoidAsync("hideModal", "kt_modal_add_testy");
+        StateHasChanged();
+    }
+
+    private async Task HandleSubmit()
+    {
+        // Calculate score on the frontend
+        int score = 0;
+
+        // Loop through each question and match with the corresponding user answer by question_id
+        foreach (var question in questions)
+        {
+            var userAnswer = userAnswers.FirstOrDefault(u => u.question_id == Convert.ToInt32( question.question_id));
+            if (userAnswer != null && question.answer.Equals(userAnswer.answer, StringComparison.OrdinalIgnoreCase))
+            {
+                score++;
+            }
+        }
+
+        results = new TestResult
+        {
+                Score = score,
+                TotalQuestions = questions.Count,
+                CorrectAnswers = score
+        };
+
+        // Send the result and user's answers to the backend for storage
+        var success = await _testService.SaveTestAndAnswersAsync(fileId, results, userAnswers);
+
+        if (success)
+        {
+            await JS.InvokeVoidAsync("alert", "Test results and answers saved successfully.");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Failed to save test results and answers.");
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnRadioChanged(UserAnswerSubmission obj, bool value)
+    {
+        if (value)
+        {
+            obj.answer = "True";
+        }
+        else if (value == false)
+        {
+            obj.answer = "False";
+        }
+    }
+
+
+
+
+}

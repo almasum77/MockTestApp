@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>e1af73ef-c0a5-4ee3-a54c-a8f91d662727</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>.</DockerfileContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
+    <PackageReference Include="MudBlazor" Version="7.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Images\Default\" />
+    <Folder Include="Models\Auth\" />
+    <Folder Include="Pages\Auth\" />
+    <Folder Include="Pages\Dashboards\" />
+    <Folder Include="Pages\Error\" />
+    <Folder Include="Pages\Question\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Starterkit.sln" />
+  </ItemGroup>
+
+</Project>

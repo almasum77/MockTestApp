@@ -1,0 +1,151 @@
+@using Starterkit.Models.Auth
+@using Starterkit.Shared.Partials.General;
+@using System.Net
+@inject IJSRuntime JS
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@page "/signup"
+
+<script suppress-error="BL9992" src='@KTTheme.GetAssetPath("js/custom/authentication/sign-up/general.js")'></script>
+
+<!--begin::Form-->
+<EditForm Model="@newUser" class="form w-100" OnValidSubmit="HandleSignUp">
+    <div class="text-center mb-11">
+        <h1 class="text-gray-900 mb-3">
+            Create an Account
+        </h1>
+        <div class="text-gray-500 fw-semibold fs-4">
+            Already have an account?
+            <a href="/signin" class="link-primary fw-bold">Sign in here</a>
+        </div>
+    </div>
+
+    <div class="row fv-row mb-7">
+        <div class="col-xl-6">
+            <label class="form-label fw-bold text-gray-900 fs-6">First Name</label>
+            <input class="form-control form-control-lg form-control-solid" type="text" @bind="newUser.firstname" autocomplete="off" />
+        </div>
+        <div class="col-xl-6">
+            <label class="form-label fw-bold text-gray-900 fs-6">Last Name</label>
+            <input class="form-control form-control-lg form-control-solid" type="text" @bind="newUser.lastname" autocomplete="off" />
+        </div>
+    </div>
+
+    <div class="fv-row mb-7">
+        <label class="form-label fw-bold text-gray-900 fs-6">Email</label>
+        <input class="form-control form-control-lg form-control-solid" type="email" @bind="newUser.email" autocomplete="off" />
+    </div>
+
+    <div class="mb-10 fv-row" data-kt-password-meter="true">
+        <div class="mb-1">
+            <label class="form-label fw-bold text-gray-900 fs-6">Password</label>
+            <div class="position-relative mb-3">
+                <input class="form-control bg-transparent" type="password" placeholder="Password" @bind="newUser.password" autocomplete="off" />
+                <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
+                    <i class="bi bi-eye-slash fs-2"></i>
+                    <i class="bi bi-eye fs-2 d-none"></i>
+                </span>
+            </div>
+            <div class="d-flex align-items-center mb-3" data-kt-password-meter-control="highlight">
+                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px"></div>
+            </div>
+        </div>
+        <div class="text-muted">
+            Use 8 or more characters with a mix of letters, numbers & symbols.
+        </div>
+    </div>
+
+    <div class="fv-row mb-5">
+        <label class="form-label fw-bold text-gray-900 fs-6">Confirm Password</label>
+        <input class="form-control form-control-lg form-control-solid" type="password" @bind="confirmPassword" autocomplete="off" />
+    </div>
+
+    <div class="fv-row mb-8">
+        <label class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" @bind="acceptTerms" />
+            <span class="form-check-label fw-semibold text-gray-700 fs-base ms-1">
+                I Accept the <a href="#" class="ms-1 link-primary">Terms</a>
+            </span>
+        </label>
+    </div>
+
+    <div class="d-grid mb-10">
+        <button type="submit" id="kt_sign_up_submit" class="btn btn-primary">
+            <_ButtonIndicator ButtonLabel="Sign Up"></_ButtonIndicator>
+        </button>
+    </div>
+
+    <div class="text-gray-500 text-center fw-semibold fs-6">
+        Already have an Account?
+        <a href="/signin" class="link-primary fw-semibold">Sign in</a>
+    </div>
+</EditForm>
+
+@* <form  onsubmit="HandleSignUp1">
+    <div class="row fv-row mb-7">
+        <div class="col-xl-6">
+            <label class="form-label fw-bold text-gray-900 fs-6">First Name</label>
+            <input class="form-control form-control-lg form-control-solid" type="text" @bind="newUser.FirstName" autocomplete="off" />
+        </div>
+        <div class="col-xl-6">
+            <label class="form-label fw-bold text-gray-900 fs-6">Last Name</label>
+            <input class="form-control form-control-lg form-control-solid" type="text" @bind="newUser.LastName" autocomplete="off" />
+        </div>
+    </div>
+    <button type="submit">submit form</button>
+</form> *@
+
+@code {
+    private User newUser = new User();
+    private string confirmPassword;
+    private bool acceptTerms = false;
+
+
+
+    private async Task HandleSignUp()
+    {
+        // Prevent form submission if terms are not accepted or passwords do not match
+        if (!acceptTerms)
+        {
+            await JS.InvokeVoidAsync("alert", "Please accept the terms and conditions.");
+            return;
+        }
+
+        if (newUser.password != confirmPassword)
+        {
+            await JS.InvokeVoidAsync("alert", "Passwords do not match.");
+            return;
+        }
+
+        try
+        {
+            var result = await AuthService.SignUp(newUser);
+
+            if (result)
+            {
+                Navigation.NavigateTo("/signin");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Signup failed. Please try again.");
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"An error occurred: {ex.Message}");
+        }
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(1000);
+            // await JS.InvokeVoidAsync("KTSignupGeneral.init");
+        }
+    }
+}
