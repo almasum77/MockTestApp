@@ -638,49 +638,47 @@ async def submit_answers(
     try:
         score = 0
         total_questions = len(request.user_answers)
+        logger.error(f"Received request: fileid={request.fileid}, score={request.score}, total_questions={request.total_questions}, correct_answers={request.correct_answers}, user_answers={request.user_answers}")
 
-        # Begin a transaction
-        with db.begin():  # This starts a transaction block
-            # Step 1: Create a new UserTest entry
-            user_test = models.UserTest(
-                userid=current_user.userid,
-                fileid=request.fileid,  # Using the file ID from the request
-                createdby=current_user.userid
-            )
-            db.add(user_test)
-            db.commit()
-            db.refresh(user_test)  # Get the test ID after saving
+        # Step 1: Create a new UserTest entry
+        user_test = models.UserTest(
+            userid=current_user.userid,
+            fileid=request.fileid,
+            createdby=current_user.userid
+        )
+        db.add(user_test)
+        db.commit()
+        db.refresh(user_test)  # Get the test ID after saving
 
-            # Step 2: Save each user's answer in the UserAnswer table
-            # for answer in request.user_answers:
-            #     correct_answer = db.query(models.Answer).filter(models.Answer.questionid == answer.question_id).first()
-            #     if correct_answer:
-            #         db_user_answer = models.UserAnswer(
-            #             testid=user_test.testid,
-            #             questionid=answer.question_id,
-            #             givenanswertext=answer.answer,
-            #             istrue=correct_answer.istrue if correct_answer.istrue else None,
-            #             createdby=current_user.userid,
-            #         )
-            #         db.add(db_user_answer)
-            #         db.commit()
+        # Step 2: Save each user's answer in the UserAnswer table
+        for answer in request.user_answers:
+            correct_answer = db.query(models.Answer).filter(models.Answer.questionid == answer.question_id).first()
+            if correct_answer:
+                db_user_answer = models.UserAnswer(
+                    testid=user_test.testid,
+                    questionid=answer.question_id,
+                    givenanswertext=answer.answer,
+                    istrue=correct_answer.istrue if correct_answer.istrue else None,
+                    createdby=current_user.userid,
+                )
+                db.add(db_user_answer)
 
-            # Step 3: Save the result in the Result table
-            # result = models.Result(
-            #     testid=user_test.testid,
-            #     score=score,
-            #     totalquestions=total_questions,
-            #     correctanswers=score,
-            #     createdby=current_user.userid,
-            # )
-            # db.add(result)
-            # db.commit()
+        # Step 3: Save the result in the Result table
+        result = models.Result(
+            testid=user_test.testid,
+            score=request.score,
+            totalquestions=total_questions,
+            correctanswers=request.correct_answers,
+            createdby=current_user.userid,
+        )
+        db.add(result)
+        db.commit()
 
         # Step 4: Return the result to the frontend
         return {
-            "score": score,
+            "score": request.score,
             "total_questions": total_questions,
-            "correct_answers": score
+            "correct_answers": request.correct_answers
         }
 
     except SQLAlchemyError as e:
