@@ -71,7 +71,10 @@ class FileQuestionSummary(BaseModel):
 
 class UserAnswerSubmission(BaseModel):
     question_id: int
-    answer: str
+    answer: Optional[str]  # Allow null values
+
+    class Config:
+        extra = "ignore"
     
 
 class TestResult(BaseModel):
@@ -87,4 +90,5 @@ class SubmitAnswersRequest(BaseModel):
     score: int
     total_questions: int
     correct_answers: int
+    question_type: str
     user_answers: List[UserAnswerSubmission]

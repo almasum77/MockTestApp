@@ -165,7 +165,7 @@
         };
 
         // Send the result and user's answers to the backend for storage
-        var success = await _testService.SaveTestAndAnswersAsync(fileId, results, userAnswers);
+        var success = await _testService.SaveTestAndAnswersAsync(fileId, results, quesitonType, userAnswers);
 
         if (success)
         {

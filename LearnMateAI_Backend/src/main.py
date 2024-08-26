@@ -629,6 +629,7 @@ def get_questions_for_file(file_id: int, db: Session = Depends(get_db), current_
 
 
 
+
 @app.post("/submit-answers/", response_model=schemas.TestResult)
 async def submit_answers(
     request: schemas.SubmitAnswersRequest,
@@ -639,42 +640,58 @@ async def submit_answers(
         score = 0
         total_questions = len(request.user_answers)
 
-        # Begin a transaction
-        with db.begin():  # This starts a transaction block
-            # Step 1: Create a new UserTest entry
-            user_test = models.UserTest(
-                userid=current_user.userid,
-                fileid=request.fileid,  # Using the file ID from the request
-                createdby=current_user.userid
-            )
-            db.add(user_test)
-            db.commit()
-            db.refresh(user_test)  # Get the test ID after saving
+        # Step 1: Create a new UserTest entry
+        user_test = models.UserTest(
+            userid=current_user.userid,
+            fileid=request.fileid,
+            createdby=current_user.userid
+        )
+        db.add(user_test)
+        db.commit()
+        db.refresh(user_test)
 
-            # Step 2: Save each user's answer in the UserAnswer table
-            # for answer in request.user_answers:
-            #     correct_answer = db.query(models.Answer).filter(models.Answer.questionid == answer.question_id).first()
-            #     if correct_answer:
-            #         db_user_answer = models.UserAnswer(
-            #             testid=user_test.testid,
-            #             questionid=answer.question_id,
-            #             givenanswertext=answer.answer,
-            #             istrue=correct_answer.istrue if correct_answer.istrue else None,
-            #             createdby=current_user.userid,
-            #         )
-            #         db.add(db_user_answer)
-            #         db.commit()
+        # Step 2: Save each user's answer in the UserAnswer table
+        for answer in request.user_answers:
+            correct_answer = db.query(models.Answer).filter(models.Answer.questionid == answer.question_id).first()
+            
+            if correct_answer:
+                if request.question_type == "TrueFalse":
+                    is_true = answer.answer.lower() == "true"
+                    if is_true == correct_answer.istrue:
+                        score += 1
 
-            # Step 3: Save the result in the Result table
-            # result = models.Result(
-            #     testid=user_test.testid,
-            #     score=score,
-            #     totalquestions=total_questions,
-            #     correctanswers=score,
-            #     createdby=current_user.userid,
-            # )
-            # db.add(result)
-            # db.commit()
+                    db_user_answer = models.UserAnswer(
+                        testid=user_test.testid,
+                        questionid=answer.question_id,
+                        givenanswertext=None,  # No text for TrueFalse questions
+                        istrue=is_true,
+                        createdby=current_user.userid,
+                    )
+                elif request.question_type == "FillInTheBlanks":
+                    if answer.answer == correct_answer.correctanswertext:
+                        score += 1
+
+                    db_user_answer = models.UserAnswer(
+                        testid=user_test.testid,
+                        questionid=answer.question_id,
+                        givenanswertext=answer.answer,  # Store the given answer text
+                        istrue=None,  # isTrue is null for FillInTheBlanks
+                        createdby=current_user.userid,
+                    )
+                
+                db.add(db_user_answer)
+                db.commit()
+
+        # Step 3: Save the result in the Result table
+        result = models.Result(
+            testid=user_test.testid,
+            score=score,
+            totalquestions=total_questions,
+            correctanswers=score,
+            createdby=current_user.userid,
+        )
+        db.add(result)
+        db.commit()
 
         # Step 4: Return the result to the frontend
         return {
@@ -687,6 +704,7 @@ async def submit_answers(
         db.rollback()  # Roll back the transaction if an error occurs
         logger.error(f"Error during submitting answers: {e}")
         raise HTTPException(status_code=500, detail="An error occurred while submitting your answers. Please try again.")
+
 
 
 #endregion

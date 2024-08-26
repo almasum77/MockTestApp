@@ -2,6 +2,8 @@
 using Starterkit.Utilities;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.Json;
+using static Starterkit.Utilities.CommonConstants;
 
 namespace Starterkit.Services
 {
@@ -13,7 +15,7 @@ namespace Starterkit.Services
         {
             _httpClient = httpClient;
         }
-        public async Task<bool> SaveTestAndAnswersAsync(int fileId, TestResult result, List<UserAnswerSubmission> userAnswers)
+        public async Task<bool> SaveTestAndAnswersAsync(int fileId, TestResult result, string questionType, List<UserAnswerSubmission> userAnswers)
         {
             var requestData = new
             {
@@ -21,8 +23,13 @@ namespace Starterkit.Services
                 score = result.Score,
                 total_questions = result.TotalQuestions,
                 correct_answers = result.CorrectAnswers,
+                question_type = questionType,
                 user_answers = userAnswers // Include the user's answers
             };
+
+            // Serialize to JSON string and log it (for debugging purposes)
+            var json = JsonSerializer.Serialize(requestData);
+            Console.WriteLine(json);
 
             if (!string.IsNullOrEmpty(CommonConstants.AuthToken))
             {
