@@ -656,7 +656,7 @@ async def submit_answers(
             
             if correct_answer:
                 if request.question_type == "TrueFalse":
-                    is_true = answer.answer.lower() == "true"
+                    is_true = (answer.answer.lower() == "true") if answer.answer is not None else None
                     if is_true == correct_answer.istrue:
                         score += 1
 
