@@ -14,70 +14,83 @@
         <!--begin::Modal content-->
         <div class="modal-content rounded">
             <!--begin::Modal header-->
-            <div class="modal-header pb-0 border-0 justify-content-end">
-                <!--begin::Close-->
-                <button class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">Close</button>
-                <!--end::Close-->
+            <div class="modal-header border-0 justify-content-end">
+                <button class="btn btn-sm btn-icon btn-light-danger" data-bs-dismiss="modal" aria-label="Close">
+                    <span class="svg-icon svg-icon-2x">
+                        <!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="black" />
+                            <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="black" />
+                        </svg>
+                        <!--end::Svg Icon-->
+                    </span>
+                </button>
             </div>
             <!--end::Modal header-->
             <!--begin::Modal body-->
-            <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
-                <div class="mb-13 text-center">
-                    <h1 class="mb-3">File Questions Summary</h1>
+            <div class="modal-body scroll-y mx-5 mx-xl-15 my-7">
+                <div class="text-center mb-13">
+                    <h1 class="mb-3">File wise Questions</h1>
                     <div class="text-muted fw-semibold fs-5">
-                        Review and manage questions for the selected file
+                        Review questions for the selected file
                     </div>
                 </div>
 
                 @if (fileQuestionSummary != null)
                 {
+                    <!--begin::File Info-->
                     <div class="mb-8">
-                        <h4>File: @fileQuestionSummary.original_filename</h4>
-                        <p>Uploaded on: @fileQuestionSummary.uploaddate</p>
-                        <p>Total Questions: @fileQuestionSummary.number_of_questions</p>
+                        <h4 class="fw-bold">File: @fileQuestionSummary.original_filename</h4>
+                        <p class="text-muted">Uploaded on: @fileQuestionSummary.uploaddate</p>
+                        <p class="text-muted">Total Questions: @fileQuestionSummary.number_of_questions</p>
                     </div>
-                    <!-- File Content Display -->
-                    <div class="mb-13 text-center">
-                        <h3>@fileQuestionSummary.original_filename</h3>
-                        <p>@fileContent</p>
+                    <!--end::File Info-->
+                    <!--begin::File Content Display-->
+                    <div class="mb-13">
+                        <h3 class="fw-bold">@fileQuestionSummary.original_filename</h3>
+                        <div class="text-muted fs-4 fw-normal lh-lg">@fileContent</div>
+
                     </div>
+                    <!--end::File Content Display-->
+                    <!--begin::Questions List-->
                     <div class="mb-8">
-                        <h4>Questions</h4>
-                        <ul>
+                        <h4 class="fw-bold">Questions</h4>
+                        <ul class="list-group list-group-flush">
                             @{
                                 var i = 1;
                             }
                             @foreach (var question in questions)
                             {
-                                
-                                <li>
-                                    @(i).
+                                <li class="list-group-item">
+                                    <span>@i. </span>
                                     @if (question.question_type == CommonConstants.QuestionType.TrueFalse.ToString())
                                     {
-                                        <span> True/Flase :</span>
+                                        <span class="badge bg-primary ms-2 mx-1">True/False</span>
                                     }
                                     else
                                     {
-                                        <span> </span>
+                                        <span class="badge bg-primary ms-2 mx-1"></span>
                                     }
-                                    @question.question
-                                    
+                                    <span class="fw-bold">@question.question</span>
+                                    <span>Ans: @question.answer</span>
                                 </li>
+
                                 i++;
                             }
-
-                            
                         </ul>
                     </div>
+                    <!--end::Questions List-->
                 }
                 else
                 {
-                    <p>No questions available for this file.</p>
+                    <p class="text-muted text-center">No questions available for this file.</p>
                 }
 
-                <div class="text-center">
-                    <button class="btn btn-primary" @onclick="Close">Close</button>
+                <!--begin::Actions-->
+                <div class="text-center mt-10">
+                    <button class="btn btn-light me-3" @onclick="Close">Close</button>
                 </div>
+                <!--end::Actions-->
             </div>
             <!--end::Modal body-->
         </div>
@@ -85,6 +98,7 @@
     </div>
     <!--end::Modal dialog-->
 </div>
+
 <!--end::Modal - File Wise Questions-->
 @code {
     [Parameter]

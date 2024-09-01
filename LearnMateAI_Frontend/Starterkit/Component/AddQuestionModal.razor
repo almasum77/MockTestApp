@@ -8,104 +8,107 @@
 @inject QuestionService _questionService
 
 	<!--begin::Modal - New Target-->
-	<div class="modal fade" id="kt_modal_new_target" tabindex="-1" aria-hidden="true">
-		<!--begin::Modal dialog-->
-		@* <div class="modal-dialog modal-dialog-centered mw-650px"> *@
+<div class="modal fade" id="kt_modal_new_target" tabindex="-1" aria-hidden="true">
+    <!--begin::Modal dialog-->
     <div class="modal-dialog modal-fullscreen">
-    
-			<!--begin::Modal content-->
-			<div class="modal-content rounded">
-				<!--begin::Modal header-->
-				<div class="modal-header pb-0 border-0 justify-content-end">
-					<!--begin::Close-->
-					<button class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">Close</button>
-					<!--end::Close-->
-				</div>
-				<!--begin::Modal header-->
-				<!--begin::Modal body-->
-                     <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
-                    <form id="kt_modal_generate_questions_form" class="form">
-                        <div class="mb-13 text-center">
-                            <h1 class="mb-3">Generate Questions</h1>
-                            <div class="text-muted fw-semibold fs-5">
-                                Upload a text file to generate questions
+        <!--begin::Modal content-->
+        <div class="modal-content rounded">
+            <!--begin::Modal header-->
+            <div class="modal-header border-0">
+                <h5 class="modal-title">Generate Questions</h5>
+                <div class="btn btn-sm btn-icon btn-light-danger" data-bs-dismiss="modal">
+                    <span class="svg-icon svg-icon-1">
+                        <!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="black" />
+                            <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="black" />
+                        </svg>
+                        <!--end::Svg Icon-->
+                    </span>
+                </div>
+            </div>
+            <!--end::Modal header-->
+            <!--begin::Modal body-->
+            <div class="modal-body scroll-y mx-5 mx-xl-15 my-7">
+                <form id="kt_modal_generate_questions_form" class="form">
+                    <!--begin::Input group-->
+                    <div class="row mb-10">
+                        <!-- File Input Column -->
+                        <div class="col-lg-4 mb-5">
+                            <label class="form-label fs-6 fw-bold">Select a File</label>
+                            <div class="input-group">
+                                <InputFile OnChange="OnFileChange" class="form-control" />
                             </div>
                         </div>
 
-                        <div class="d-flex flex-column mb-8 fv-row">
-                            <label class="fs-6 fw-semibold mb-2">Select a File</label>
-                            <InputFile OnChange="OnFileChange" />
-                        </div>
-
-                        <div class="d-flex flex-column mb-8 fv-row">
-                            <label class="fs-6 fw-semibold mb-2">Number of Questions</label>
+                        <!-- Number of Questions Column -->
+                        <div class="col-lg-4 mb-5">
+                            <label class="form-label fs-6 fw-bold">Number of Questions</label>
                             <input type="number" class="form-control form-control-solid" @bind="questionSize" />
                         </div>
 
-                        <div class="d-flex flex-column mb-8 fv-row">
-                            <label class="fs-6 fw-semibold mb-2">Question Type</label>
-                        <select multiple class="form-select form-select-solid" @onchange="HandleQuestionTypeChange">
-                                <option value="FillInTheBlanks">Fill in the Blanks</option>
-                                <option value="TrueFalse">True/False</option>
-                            </select>
+                        <!-- Question Type Column -->
+                        <div class="col-lg-4 mb-5">
+@*                             <label class="form-label fs-6 fw-bold">Question Type</label>
+ *@
+                            <MudSelect T="string" @bind-Value="selectedQuestionType" Label="Select Question Type" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
+                                <MudSelectItem Value="@("FillInTheBlanks")" >Fill in the Blanks</MudSelectItem>
+                                <MudSelectItem Value="@("TrueFalse")" >True/False</MudSelectItem>
+                            </MudSelect>
                         </div>
+                    </div>
 
-                        <div class="text-center">
-                            <button type="button" class="btn btn-light me-3" @onclick="Close">Cancel</button>
-                            <button type="button" class="btn btn-primary" @onclick="HandleSubmit">
-                                <span class="indicator-label">Generate</span>
-                            </button>
-                        </div>
-                    </form>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-light me-3" @onclick="Close">Cancel</button>
+                        <button type="button" class="btn btn-primary" @onclick="HandleSubmit">
+                            <span class="indicator-label">Generate</span>
+                        </button>
+                    </div>
 
-                    @if(questionAnswerPairs?.Count > 0)
-                    {
-                        <div class="mt-10">
-                            <h4>Generated Questions</h4>
-                            <ol>
-                                @foreach (var qa in questionAnswerPairs)
-                                {
-                                    <li>
-                                        <div>@qa.question</div>
-                                        @if (qa.question_type == "TrueFalse")
-                                        {
-                                            <div>
-                                                <input type="radio" name="@qa.question_id" value="True"> True
-                                            <input type="radio" name="@qa.question_id" value="False"> False
-                                            </div>
-                                        }
-                                    else if (qa.question_type == "FillInTheBlanks")
-                                        {
-                                        <input type="text" name="@qa.question_id" />
-                                        }
-                                    </li>
-                                }
-                            </ol>
-                            <h4>Correct Answers</h4>
-                            <ul>
+
+                    <!--end::Input group-->
+
+                </form>
+
+                <!--begin::Generated Questions-->
+                @if (questionAnswerPairs?.Count > 0)
+                {
+                    <div class="mt-10">
+                        <h4 class="fw-bold">Generated Questions</h4>
+                        <ol class="list-group list-group-numbered">
+                            @foreach (var qa in questionAnswerPairs)
+                            {
+                                <li class="list-group-item">
+                                    <div>@qa.question</div>
+                                    
+                                </li>
+                            }
+                        </ol>
+                        <h4 class="fw-bold mt-10">Correct Answers</h4>
+                        <ul class="list-group">
                             @{
                                 var i = 1;
                             }
-                                @foreach (var qa in questionAnswerPairs)
-                                {
-                                <li>@i. Correct Answer: @qa.answer</li>
+                            @foreach (var qa in questionAnswerPairs)
+                            {
+                                <li class="list-group-item">@i. Correct Answer: @qa.answer</li>
                                 i++;
                             }
-                                
-                            </ul>
-                        <div class="text-center">
+                        </ul>
+                        <div class="text-center mt-10">
                             <button @onclick="SaveQuestionsAndAnswers" class="btn btn-primary">Save Questions and Answers</button>
                         </div>
-                        </div>
-                    }
+                    </div>
+                }
+                <!--end::Generated Questions-->
+            </div>
+            <!--end::Modal body-->
+        </div>
+        <!--end::Modal content-->
+    </div>
+    <!--end::Modal dialog-->
+</div>
 
-                </div>
-                <!--end::Modal body-->
-			</div>
-			<!--end::Modal content-->
-		</div>
-		<!--end::Modal dialog-->
-	</div>
 	<!--end::Modal - New Target-->
 
 
@@ -120,6 +123,7 @@
     private bool isLoading = false;
     private string sessionId;
     private string fileId;
+    private string selectedQuestionType;
 
     public async Task Open()
     {
@@ -145,6 +149,7 @@
 
         if (_selectedFile != null)
         {
+            HandleQuestionTypeChange();
             using var stream = _selectedFile.OpenReadStream(); // Get the file stream
             var fileName = _selectedFile.Name; // Get the actual file name
 
@@ -153,7 +158,7 @@
             {
                 fileId = response.file_id.ToString();
                 sessionId = response.session_id;
-                questionAnswerPairs = response.question_answer_pairs;
+                questionAnswerPairs = response.question_answer_pairs.Where(s=>s.answer!=null).ToList();
             }
         }
 
@@ -183,13 +188,16 @@
         }
     }
 
-    private void HandleQuestionTypeChange(ChangeEventArgs e)
+    private void HandleQuestionTypeChange()
     {
-        var selectedOptions = e.Value as IEnumerable<string>;
-
-        if (selectedOptions != null)
+        if (!string.IsNullOrEmpty(selectedQuestionType))
         {
-            questionTypes = selectedOptions.ToList();
+            // Split the string into a list of strings
+            questionTypes = selectedQuestionType.Split(',').ToList();
+        }
+        else
+        {
+            questionTypes.Clear();
         }
     }
 }

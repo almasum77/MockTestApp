@@ -10,7 +10,7 @@ import uuid
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from src.database import models, schemas
-from src.database.models import Question, UploadedFile
+from src.database.models import Answer, Question, Result, UploadedFile, UserAnswer, UserTest
 from .tables_create import User
 from .database.database import engine, SessionLocal
 from datetime import datetime, timedelta
@@ -129,29 +129,6 @@ templates = Jinja2Templates(directory="src/templates")
 # In-memory storage for session data (questions and their correct answers)
 questions_store = {}
 
-@app.get("/", response_class=HTMLResponse)
-async def display_form(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "questions": [], "answers": []})
-
-
-# ================== File posting to api ===================
-@app.post("/", response_class=HTMLResponse)
-async def handle_file_upload(request: Request, file: UploadFile = File(...)):
-    content = await file.read()
-    text = content.decode('utf-8')
-    question_types = ["FillInTheBlanks", "TrueFalse"]  
-    # question_types = ["FillInTheBlanks"]  
-    questions, answers = generate_questions_old(text, question_types)
-    session_id = str(uuid.uuid4())
-    questions_store[session_id] = answers
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "questions": questions,
-        "session_id": session_id,
-        "correct_answers": answers  # Include correct answers in the context
-    })
-
-
 
 
 questions = []
@@ -210,20 +187,6 @@ def generate_fill_in_the_blanks_question(paraphrased):
 
 
 
-# ================== generate true false questions ===================
-def generate_true_false_question_old(paraphrased):
-    # Decide randomly whether the statement should be true or false
-    is_true = random.choice([True, False])
-    
-    if is_true:
-        # Return the original paraphrased sentence as a true statement
-        return f"True or False: {paraphrased}", is_true
-    else:
-        # Negate the sentence to make a false statement
-        false_statement = negate_sentence(paraphrased)
-        return f"True or False: {false_statement}", is_true
-
-
 def generate_true_false_question(paraphrased):
     # Decide randomly whether the statement should be true or false
     is_true = random.choice([True, False])
@@ -264,52 +227,6 @@ def negate_sentence(sentence):
                 break
 
     return modified_sentence
-
-# Test the function
-# print(negate_sentence("London is culturally a city of immense creativity"))
-# print(negate_sentence("It is a large room"))
-
-
-# ================== Submit answers function ===================
-@app.post("/submit-answers-old", response_class=HTMLResponse)
-async def submit_answers_old(request: Request):
-    form_data = await request.form()
-    session_id = form_data.get('session_id')
-    question_ids = [key.split('_')[1] for key in form_data.keys() if key.startswith('answers_')]
-    answers = [form_data.get('answers_' + q_id) for q_id in question_ids]
-
-    print(f"answers are: {answers}")
-    print(f"question_ids are: {question_ids}")
-    if session_id not in questions_store:
-        return templates.TemplateResponse("index.html", {"request": request, "message": "Session expired or not found."})
-
-    correct_answers = questions_store[session_id]
-    score = 0
-    
-    # Print debugging information
-    print(f"Question IDs: {question_ids}")
-    print(f"Answers: {answers}")
-    print(f"Correct Answers: {correct_answers}")
-
-    for question_id, answer in zip(question_ids, answers):
-        if question_id in correct_answers:
-            correct_answer = correct_answers[question_id]
-            # Check if the answer is boolean and compare directly, else perform string manipulation
-            if isinstance(correct_answer, bool):
-                if answer == str(correct_answer):  # Convert the correct answer to string for comparison
-                    score += 1
-            else:
-                if answer and answer.strip().lower() == correct_answer.strip().lower():
-                    score += 1
-    print(f"score : {score}")
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "score": score,
-        "total": len(question_ids),
-        "message": f"Score: {score} out of {len(correct_answers)}"
-    })
-
-
 
 
 
@@ -639,11 +556,14 @@ async def submit_answers(
     try:
         score = 0
         total_questions = len(request.user_answers)
-
+        # Generate a unique testno
+        testnoValue = str(uuid.uuid4())[:10].upper()
+        
         # Step 1: Create a new UserTest entry
         user_test = models.UserTest(
             userid=current_user.userid,
             fileid=request.fileid,
+            testno=testnoValue,
             createdby=current_user.userid
         )
         db.add(user_test)
@@ -708,3 +628,110 @@ async def submit_answers(
 
 
 #endregion
+
+
+
+#region test related operations
+
+@app.get("/test-summaries", response_model=List[schemas.TestSummary])
+async def get_test_summaries(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    test_summaries = (
+        db.query(
+            UserTest.testid,
+            UserTest.testno,
+            UserTest.userid,
+            UserTest.fileid,
+            UserTest.testdate,
+            Result.score,
+            Result.totalquestions,
+            Result.correctanswers,
+            UploadedFile.original_filename.label('filename')  # Fetch the filename from the UploadedFile table
+        )
+        .join(Result, UserTest.testid == Result.testid)
+        .join(UploadedFile, UserTest.fileid == UploadedFile.fileid)  # Join with the UploadedFile table
+        .filter(UserTest.userid == current_user.userid)
+        .all()
+    )
+
+    if not test_summaries:
+        raise HTTPException(status_code=404, detail="No test summaries found for this user.")
+    
+    return [
+        schemas.TestSummary(
+            testid=summary.testid,
+            testno=summary.testno,
+            userid=summary.userid,
+            fileid=summary.fileid,
+            filename=summary.filename,  # Include the filename in the response
+            testdate=summary.testdate,
+            score=summary.score,
+            totalquestions=summary.totalquestions,
+            correctanswers=summary.correctanswers
+        ) for summary in test_summaries
+    ]
+
+
+
+
+@app.get("/test-details/{test_id}", response_model=schemas.TestDetail)
+async def get_test_details(test_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    try:
+        # Fetch the test data
+        user_test = (
+            db.query(UserTest)
+            .filter(UserTest.testid == test_id, UserTest.userid == current_user.userid)
+            .first()
+        )
+
+        if not user_test:
+            raise HTTPException(status_code=404, detail="Test not found.")
+
+        # Fetch the associated result
+        result = db.query(Result).filter(Result.testid == test_id).first()
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Result not found.")
+
+        # Fetch the user answers along with the question text
+        user_answers = (
+            db.query(UserAnswer, Question.questiontext, Answer.correctanswertext)
+            .join(Question, UserAnswer.questionid == Question.questionid)
+            .join(Answer, UserAnswer.questionid == Answer.questionid)
+            .filter(UserAnswer.testid == test_id)
+            .all()
+        )
+
+        # Return the result
+        return {
+            "testid": user_test.testid,
+            "testno": user_test.testno,
+            "userid": user_test.userid,
+            "fileid": user_test.fileid,
+            "filename": user_test.file.original_filename,  # Adding the filename to the response
+            "testdate": user_test.testdate,
+            "score": result.score,
+            "totalquestions": result.totalquestions,
+            "correctanswers": result.correctanswers,
+            "user_answers": [
+                {
+                    "question_id": user_answer.UserAnswer.questionid,
+                    "question": user_answer.questiontext,  
+                    "user_answer": user_answer.UserAnswer.givenanswertext,
+                    "correct_answer": user_answer.correctanswertext,
+                    "is_correct": user_answer.UserAnswer.istrue,
+                }
+                for user_answer in user_answers
+            ]
+        }
+
+    except Exception as e:
+        logger.error(f"Error retrieving test details for test_id {test_id}: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred while retrieving test details.")
+
+
+
+
+
+#endregion
+
+

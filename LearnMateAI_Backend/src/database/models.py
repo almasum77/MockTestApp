@@ -80,6 +80,7 @@ class UserTest(Base):
     testid = Column(Integer, primary_key=True, index=True)
     userid = Column(Integer, ForeignKey('users.userid'))  # Foreign key in lowercase
     fileid = Column(Integer, ForeignKey('files.fileid'))  # Foreign key in lowercase
+    testno = Column(String(50), unique=True, nullable=False)
     testdate = Column(DateTime(timezone=True), server_default=func.now())
     createddate = Column(DateTime(timezone=True), server_default=func.now())
     createdby = Column(Integer, nullable=True)
@@ -122,4 +123,7 @@ class Result(Base):
 
     # Relationships
     test = relationship('UserTest', back_populates='results')
+
+
+
 

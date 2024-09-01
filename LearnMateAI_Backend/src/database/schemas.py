@@ -92,3 +92,58 @@ class SubmitAnswersRequest(BaseModel):
     correct_answers: int
     question_type: str
     user_answers: List[UserAnswerSubmission]
+    
+    
+
+
+#added new
+
+class TestSummary(BaseModel):
+    testid: int
+    testno: str
+    userid: int
+    fileid: int
+    filename: str
+    testdate: datetime
+    score: Optional[int]
+    totalquestions: Optional[int]
+    correctanswers: Optional[int]
+
+    class Config:
+        orm_mode = True
+
+class UserAnswerDetail(BaseModel):
+    question_id: int
+    user_answer: Optional[str]
+    correct_answer: Optional[str]
+    is_correct: Optional[bool]
+
+    class Config:
+        orm_mode = True
+        
+        
+class TestQuesitonAnswerDetails(BaseModel):
+    question_id: int
+    question: Optional[str]
+    user_answer: Optional[str]
+    correct_answer: Optional[str]
+    is_correct: Optional[bool]
+
+    class Config:
+        orm_mode = True
+
+class TestDetail(BaseModel):
+    testid: int
+    testno: str
+    userid: int
+    fileid: int
+    filename: str
+    testdate: datetime
+    score: Optional[int]
+    totalquestions: Optional[int]
+    correctanswers: Optional[int]
+    user_answers: List[TestQuesitonAnswerDetails]
+
+    class Config:
+        orm_mode = True
+        

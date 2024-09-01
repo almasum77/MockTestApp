@@ -8,91 +8,107 @@
 
 
 	<!--begin::Modal - New Target-->
-	<div class="modal fade" id="kt_modal_add_test" tabindex="-1" aria-hidden="true">
-		<!--begin::Modal dialog-->
-		@* <div class="modal-dialog modal-dialog-centered mw-650px"> *@
+<div class="modal fade" id="kt_modal_add_test" tabindex="-1" aria-hidden="true">
+    <!--begin::Modal dialog-->
     <div class="modal-dialog modal-fullscreen">
-    
-			<!--begin::Modal content-->
-			<div class="modal-content rounded">
-				<!--begin::Modal header-->
-				<div class="modal-header pb-0 border-0 justify-content-end">
-					<!--begin::Close-->
-					<button class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">Close</button>
-					<!--end::Close-->
-				</div>
-				<!--begin::Modal header-->
-				<!--begin::Modal body-->
-            <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
+        <!--begin::Modal content-->
+        <div class="modal-content rounded">
+            <!--begin::Modal header-->
+            <div class="modal-header border-0 justify-content-end">
+                <div class="btn btn-sm btn-icon btn-light-danger" data-bs-dismiss="modal">
+                    <span class="svg-icon svg-icon-1">
+                        <!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="black" />
+                            <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="black" />
+                        </svg>
+                        <!--end::Svg Icon-->
+                    </span>
+                </div>
+            </div>
+            <!--end::Modal header-->
+            <!--begin::Modal body-->
+            <div class="modal-body scroll-y mx-5 mx-xl-15 my-7">
                 @if (questions != null)
                 {
+                    <div class="text-center mb-13">
+                        <h1 class="mb-3">Start The Test</h1>
+                        <div class="text-muted fw-semibold fs-5">
+                            
+                        </div>
+                    </div>
+                    <!--begin::File Info-->
                     <div class="mb-8">
-                        <h4>File: @fileQuestionSummary.original_filename</h4>
-                        <p>Uploaded on: @fileQuestionSummary.uploaddate</p>
-                        <p>Total Questions: @fileQuestionSummary.number_of_questions</p>
+                        <h4 class="fw-bold">File: @fileQuestionSummary.original_filename</h4>
+@*                         <p class="text-muted">Uploaded on: @fileQuestionSummary.uploaddate</p>
+ *@                        <p class="text-muted">Total Questions: @fileQuestionSummary.number_of_questions</p>
                     </div>
-                    <!-- File Content Display -->
-                    <div class="mb-13 text-center">
-                        <h3>@fileQuestionSummary.original_filename</h3>
-                        <p>@fileContent</p>
+                    <!--end::File Info-->
+                    <!--begin::File Content Display-->
+                    <div class="mb-13">
+                        <h3 class="fw-bold">@fileQuestionSummary.original_filename</h3>
+                        <div class="text-muted  fs-4 fw-normal lh-lg">@fileContent</div>
                     </div>
-                    <div>
-                        <h4>Answer the following questions:</h4>
-                        <EditForm Model="@userAnswers" OnValidSubmit="HandleSubmit">
-                            @for(int i = 0; i < questions.Count; i++)
-                            {
-                                var userAnswer = userAnswers.FirstOrDefault(u => u.question_id == Convert.ToInt32(questions[i].question_id));
-                                string answerValue = userAnswer?.answer ?? string.Empty;
-
-                                <div>
-                                    <p>@(i + 1). @questions[i].question</p>
-
-                                    @if (questions[i].question_type == "TrueFalse")
-                                    {
-                                        <label class="radio radio-accent radio-success">
-                                            <input type="radio"  @onchange="()=>OnRadioChanged(userAnswer, true)" />
-                                            <span></span>
-                                            True
-                                        </label>
-                                        <label class="radio radio-accent radio-success">
-                                            <input type="radio"  @onchange="()=>OnRadioChanged(userAnswer, false)" />
-                                            <span></span>
-                                            False
-                                        </label>
-
-                                    }
-                                    else if (questions[i].question_type == "FillInTheBlanks")
-                                    {
-                                        <InputText @bind-Value="@userAnswer.answer"/>
-                                    }
-                                </div>
-                            }
-
-                            <button type="submit" class="btn btn-primary">Submit</button>
-                        </EditForm>
-
-                        @if (results != null)
+                    <!--end::File Content Display-->
+                    <!--begin::Questions Form-->
+                    <h4 class="fw-bold mb-4">Answer the following questions:</h4>
+                    <EditForm Model="@userAnswers" OnValidSubmit="HandleSubmit">
+                        @for (int i = 0; i < questions.Count; i++)
                         {
-                            <div>
-                                <h4>Results:</h4>
-                                <p>Score: @results.Score/@results.TotalQuestions</p>
-                                <p>Correct Answers: @results.CorrectAnswers</p>
+                            var userAnswer = userAnswers.FirstOrDefault(u => u.question_id == Convert.ToInt32(questions[i].question_id));
+                            string answerValue = userAnswer?.answer ?? string.Empty;
+
+                            <div class="mb-5">
+                                <p class="fw-bold">@($"{i + 1}. {questions[i].question}")</p>
+
+                                @if (questions[i].question_type == "TrueFalse")
+                                {
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" @onchange="() => OnRadioChanged(userAnswer, true)" />
+                                        <label class="form-check-label">True</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" @onchange="() => OnRadioChanged(userAnswer, false)" />
+                                        <label class="form-check-label">False</label>
+                                    </div>
+                                }
+                                else if (questions[i].question_type == "FillInTheBlanks")
+                                {
+                                    <div class="input-group">
+                                        <InputText class="form-control" @bind-Value="@userAnswer.answer" />
+                                    </div>
+                                }
                             </div>
                         }
-                    </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </EditForm>
+                    <!--end::Questions Form-->
+                    @if (results != null)
+                    {
+                        <!--begin::Results-->
+                        <div class="mt-10">
+                            <h4 class="fw-bold">Results:</h4>
+                            <p class="text-normal">Score: @results.Score/@results.TotalQuestions</p>
+                            <p class="text-muted">Correct Answers: @results.CorrectAnswers</p>
+                        </div>
+                        <!--end::Results-->
+                    }
                 }
                 else
                 {
-                    <p>Loading...</p>
+                    <p class="text-center text-muted">Loading...</p>
                 }
             </div>
-            
-                <!--end::Modal body-->
-			</div>
-			<!--end::Modal content-->
-		</div>
-		<!--end::Modal dialog-->
-	</div>
+            <!--end::Modal body-->
+        </div>
+        <!--end::Modal content-->
+    </div>
+    <!--end::Modal dialog-->
+</div>
+
 	<!--end::Modal - New Target-->
 
 

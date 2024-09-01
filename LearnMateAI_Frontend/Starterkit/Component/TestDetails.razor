@@ -1,0 +1,189 @@
+﻿@using Starterkit.Models.Test
+@using Starterkit.Services
+
+
+@inject IJSRuntime JS
+@inject TestService _testService
+@inject QuestionService _questionService
+
+<!--begin::Modal - New Target-->
+<div class="modal fade" id="kt_modal_test_details" tabindex="-1" aria-hidden="true">
+    <!--begin::Modal dialog-->
+    <div class="modal-dialog modal-fullscreen">
+        <!--begin::Modal content-->
+        <div class="modal-content rounded">
+            <!--begin::Modal header-->
+            <div class="modal-header pb-0 border-0 justify-content-end">
+                <!--begin::Close-->
+                <button class="btn btn-sm btn-icon btn-light-danger" data-bs-dismiss="modal" aria-label="Close">
+                    <span class="svg-icon svg-icon-2x">
+                        <!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="black" />
+                            <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="black" />
+                        </svg>
+                        <!--end::Svg Icon-->
+                    </span>
+                </button>
+                <!--end::Close-->
+            </div>
+
+            <!--begin::Modal header-->
+            <!--begin::Modal body-->
+            <div class="modal-body scroll-y px-10 px-lg-15 pt-0 pb-15">
+                <div class="card mb-7">
+                    <!--begin::Card body-->
+                    <div class="card-body">
+                        <!--begin::Details-->
+                        <div class="d-flex flex-column">
+                            <!--begin::Info-->
+                            <div class="d-flex flex-wrap">
+                                <!--begin::Test Information-->
+                                <div class="mb-10">
+                                    <h5 class="fw-bold mb-4">Test Information</h5>
+
+                                    <div class="fs-6 mb-3">
+                                        <span class="text-muted me-2">Test No:</span>
+                                        <span class="text-dark fw-bold">@testDetail.testno</span>
+                                    </div>
+                                    <div class="fs-6 mb-3">
+                                        <span class="text-muted me-2">File Name:</span>
+                                        <span class="text-dark fw-bold">@testDetail.filename</span>
+                                    </div>
+                                    <div class="fs-6 mb-3">
+                                        <span class="text-muted me-2">Question Type:</span>
+                                        <span class="text-dark fw-bold">@question_type</span>
+                                    </div>
+                                    <div class="fs-6 mb-3">
+                                        <span class="text-muted me-2">Test Date:</span>
+                                        <span class="text-dark fw-bold">@testDetail.testdate</span>
+                                    </div>
+                                </div>
+                                <!--end::Test Information-->
+                            </div>
+                            <!--end::Info-->
+                            <!--begin::Separator-->
+                            <div class="separator my-4"></div>
+                            <!--end::Separator-->
+                            <!--begin::Test Results-->
+                            <div class="d-flex flex-column mb-7">
+                                <h5 class="fw-bold mb-4">Test Results</h5>
+                                <div class="d-flex flex-wrap">
+                                    <div class="me-10">
+                                        <div class="fs-6 mb-3">
+                                            <span class="text-muted me-2">Score:</span>
+                                            <span class="text-dark fw-bold">@testDetail.score</span>
+                                        </div>
+                                        <div class="fs-6 mb-3">
+                                            <span class="text-muted me-2">Total Questions:</span>
+                                            <span class="text-dark fw-bold">@testDetail.totalquestions</span>
+                                        </div>
+                                        <div class="fs-6 mb-3">
+                                            <span class="text-muted me-2">Correct Answers:</span>
+                                            <span class="text-dark fw-bold">@testDetail.correctanswers</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--end::Test Results-->
+                            <!--begin::Separator-->
+                            <div class="separator my-4"></div>
+                            <!--end::Separator-->
+                            <!--begin::File Content-->
+                            <div class="d-flex flex-column mb-7">
+                                <h5 class="fw-bold mb-4">File Content</h5>
+                                <div class="fs-6">
+                                    <div class="text-dark">@fileContent</div>
+                                </div>
+                            </div>
+                            <!--end::File Content-->
+                            <!--begin::Separator-->
+                            <div class="separator my-4"></div>
+                            <!--end::Separator-->
+                            <!--begin::User Answers-->
+                            <div class="d-flex flex-column">
+                                <h5 class="fw-bold mb-4">User Answers</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
+                                        <thead>
+                                            <tr class="fw-bold text-muted">
+                                                <th class="w-25px">#</th>
+                                                <th class="min-w-200px">Question</th>
+                                                <th class="min-w-150px">User Answer</th>
+                                                <th class="min-w-150px">Correct Answer</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Repeat for each question -->
+                                            @if (testDetail != null && testDetail.user_answers != null)
+                                            {
+                                                var slNO = 1;
+                                                @foreach (var userAnswer in testDetail.user_answers)
+                                                {
+                                                    <tr>
+                                                        <td>@slNO</td>
+                                                        <td>@userAnswer.question</td>
+                                                        <td>@userAnswer.user_answer</td>
+                                                        <td>
+                                                            @if (question_type == Utilities.CommonConstants.QuestionType.TrueFalse.ToString())
+                                                            {
+                                                                <span class="badge badge-light-@userAnswer.is_correct">@userAnswer.is_correct</span>
+                                                            }
+                                                            else if (question_type == Utilities.CommonConstants.QuestionType.FillInTheBlanks.ToString())
+                                                            {
+                                                                @userAnswer.correct_answer
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    slNO++;
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!--end::User Answers-->
+                        </div>
+                        <!--end::Details-->
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Card-->
+            </div>
+            <!--end::Modal body-->
+        </div>
+        <!--end::Modal content-->
+    </div>
+    <!--end::Modal dialog-->
+</div>
+
+<!--end::Modal - New Target-->
+
+@code {
+    public TestDetail testDetail = new TestDetail();
+    private string question_type { get; set; }
+    private string fileContent;
+
+    public async Task Open(int TestId)
+
+    {
+        testDetail = await _testService.GetTestDetailsAsync(TestId);
+        if (string.IsNullOrEmpty(testDetail.user_answers.Select(s => s.correct_answer).FirstOrDefault()))
+        {
+            question_type = Utilities.CommonConstants.QuestionType.TrueFalse.ToString();
+        }
+        else
+        {
+            question_type = Utilities.CommonConstants.QuestionType.TrueFalse.ToString();
+        }
+
+        // Fetch file content
+        fileContent = await _questionService.GetFileContentAsync(testDetail.fileid);
+
+        await JS.InvokeVoidAsync("showModal", "kt_modal_test_details");
+        // questionAnswerPairs.Clear();
+        StateHasChanged();
+    }
+
+    
+}

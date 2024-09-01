@@ -3,12 +3,14 @@
 @inject IJSRuntime JS
 @inject UserInfoContextService _userContext
 @inject NavigationManager Navigation
+@inject AuthService _authService
 
 
 @using Layout._Helpers
 @using Layout.Partials.HeaderLayout
 @using Starterkit.Models
 @using Starterkit.Shared.Partials
+@using Starterkit.Utilities
 
 @* Required *@
 <MudThemeProvider />
@@ -63,18 +65,20 @@
 <_Scrolltop></_Scrolltop>
 
 @code {
-	private IKTThemeHelpers KTHelper = default!;
+    private IKTThemeHelpers KTHelper = default!;
 
-	protected override void OnInitialized()
-	{
-		KTHelper = new KTThemeHelpers(JS);
-		KTHelper.addBodyAttribute("data-kt-app-page-loading", "on");
-	}
-	
-	protected override void OnAfterRender(bool firstRender)
-	{
-		if(firstRender){
-		    KTHelper.addBodyAttribute("data-kt-app-reset-transition", "true");
+    protected override void OnInitialized()
+    {
+        KTHelper = new KTThemeHelpers(JS);
+        KTHelper.addBodyAttribute("data-kt-app-page-loading", "on");
+
+
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if(firstRender){
+            KTHelper.addBodyAttribute("data-kt-app-reset-transition", "true");
 
             KTHelper.addBodyAttribute("data-kt-app-layout", "light-header");
             KTHelper.addBodyAttribute("data-kt-app-header-fixed", "true");
@@ -88,22 +92,47 @@
             JS.InvokeVoidAsync("KTModalNewTarget.init");
             JS.InvokeVoidAsync("KTAppSidebar.init");
         }
-	}
-
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await Task.Delay(300);
-		await JS.InvokeVoidAsync("document.body.removeAttribute", "data-kt-app-reset-transition");
-		await JS.InvokeVoidAsync("document.body.removeAttribute", "data-kt-app-page-loading");
     }
 
-	protected override async Task OnInitializedAsync()
-	{
-		if (_userContext.userInfo == null)
-		{
-			Navigation.NavigateTo("/signin");
-		}
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await Task.Delay(300);
+        await JS.InvokeVoidAsync("document.body.removeAttribute", "data-kt-app-reset-transition");
+        await JS.InvokeVoidAsync("document.body.removeAttribute", "data-kt-app-page-loading");
+
+        if (_userContext.userInfo == null)
+        {
+            // Attempt to retrieve the token from localStorage
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                // If a token exists, set it in CommonConstants and load the current user
+                CommonConstants.AuthToken = token;
+
+                await _authService.LoadCurrentUser();
+
+                if (_userContext.userInfo == null)
+                {
+                    // If loading user info fails, redirect to sign-in
+                    Navigation.NavigateTo("/signin");
+                }
+            }
+            else
+            {
+                // No token means redirect to the sign-in page
+                Navigation.NavigateTo("/signin");
+            }
+        }
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if user information is already loaded
+        
+    }
 
 
-	}
+
 }
