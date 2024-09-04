@@ -18,27 +18,26 @@
 
 <head>
     <base href="~/" />
-    <meta charset="utf-8"/>
-    <meta name="description" content=""/>
-    <meta name="keywords" content=""/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta property="og:locale" content="en_US"/>
-    <meta property="og:type" content="article"/>
-    <meta property="og:title" content=""/>
+    <meta charset="utf-8" />
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="" />
 
-    <link rel="shortcut icon" href="@KTTheme.GetFavicon()"/>
+    <link rel="shortcut icon" href="@KTTheme.GetFavicon()" />
 
     <!--begin::Fonts-->
     @foreach (string font in KTTheme.GetFonts())
     {
-        <link rel="stylesheet" href="@font"/>
+        <link rel="stylesheet" href="@font" />
     }
     <!--end::Fonts-->
-
     <!--begin::Global Stylesheets(mandatory)-->
     @foreach (string file in KTTheme.GetGlobalAssets("Css"))
     {
-        <link rel="stylesheet" type="text/css" href="@file"/>
+        <link rel="stylesheet" type="text/css" href="@file" />
     }
     <!--end::Global Stylesheets-->
 
@@ -46,35 +45,34 @@
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
 </head>
 <!--end::Head-->
-
 <!--begin::Body-->
 <!body @Html.Raw(KTTheme.PrintHtmlAttributes("body")) class='@KTTheme.PrintHtmlClasses("body")'>
-    <partial name="~/Shared/Partials/ThemeMode/_Init.cshtml"></partial>
+<partial name="~/Shared/Partials/ThemeMode/_Init.cshtml"></partial>
 
-    <!--begin::Global Javascript(mandatory)-->
+<!--begin::Global Javascript(mandatory)-->
     @foreach (string file in KTTheme.GetGlobalAssets("Js"))
     {
-        <script src="@file"></script>
+    <script src="@file"></script>
     }
-    <!--end::Global Javascript-->
+<!--end::Global Javascript-->
 
-    <partial name="~/Shared/Partials/_PageLoader.cshtml"></partial>
+<partial name="~/Shared/Partials/_PageLoader.cshtml"></partial>
 
 
     @RenderBody()
 
-    <script src="_framework/blazor.server.js"></script>
-    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+<script src="_framework/blazor.server.js"></script>
+<script src="_content/MudBlazor/MudBlazor.min.js"></script>
 
-    <script>
-        function showModal(modalId) {
-            $('#' + modalId).modal('show');
-        }
+<script>
+    function showModal(modalId) {
+        $('#' + modalId).modal('show');
+    }
 
-        function hideModal(modalId) {
-            $('#' + modalId).modal('hide');
-        }
-    </script>
+    function hideModal(modalId) {
+        $('#' + modalId).modal('hide');
+    }
+</script>
 
 </!body>
 <!--end::Body-->

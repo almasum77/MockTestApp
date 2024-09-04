@@ -115,6 +115,7 @@
 
 
 @code {
+
     public int fileId { get; set; }  // Receive fileId as a parameter
 
     private List<QuestionAnswerPairNew> questions;
@@ -188,6 +189,7 @@
         if (success)
         {
             await JS.InvokeVoidAsync("alert", "Test results and answers saved successfully.");
+            await Close();
         }
         else
         {

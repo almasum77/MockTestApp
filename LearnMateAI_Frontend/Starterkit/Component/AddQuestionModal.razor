@@ -3,9 +3,12 @@
 @using Starterkit.Services
 @using Starterkit.Shared.Partials.General
 @using Starterkit._keenthemes.libs
+@using Blazored.Toast
 
 @inject IJSRuntime JS
 @inject QuestionService _questionService
+@inject Blazored.Toast.Services.IToastService ToastService
+
 
 	<!--begin::Modal - New Target-->
 <div class="modal fade" id="kt_modal_new_target" tabindex="-1" aria-hidden="true">
@@ -49,13 +52,23 @@
 
                         <!-- Question Type Column -->
                         <div class="col-lg-4 mb-5">
-@*                             <label class="form-label fs-6 fw-bold">Question Type</label>
- *@
+                            <label class="form-label fs-6 fw-bold">Question Type</label>
+                            <div class="input-group">
+                                <MudSelect T="string" @bind-Value="selectedQuestionType" Label="Select Question Type" Variant="Variant.Filled" Class="form-control">
+                                    <MudSelectItem Value="@("FillInTheBlanks")">Fill in the Blanks</MudSelectItem>
+                                    <MudSelectItem Value="@("TrueFalse")">True/False</MudSelectItem>
+                                </MudSelect>
+                            </div>
+                        </div>
+
+
+                        <!-- Question Type Column -->
+                        @* <div class="col-lg-4 mb-5">
                             <MudSelect T="string" @bind-Value="selectedQuestionType" Label="Select Question Type" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter">
                                 <MudSelectItem Value="@("FillInTheBlanks")" >Fill in the Blanks</MudSelectItem>
                                 <MudSelectItem Value="@("TrueFalse")" >True/False</MudSelectItem>
                             </MudSelect>
-                        </div>
+                        </div> *@
                     </div>
 
                     <div class="text-center">
@@ -114,7 +127,7 @@
 
 @code {
     [Parameter]
-    public EventCallback OnSubmit { get; set; }
+    public EventCallback<bool> OnSubmit { get; set; }
 
     private string? selectedFile;
     private int questionSize = 10;
@@ -127,9 +140,10 @@
 
     public async Task Open()
     {
-
+        
         await JS.InvokeVoidAsync("showModal", "kt_modal_new_target");
         // questionAnswerPairs.Clear();
+        
         StateHasChanged();
     }
 
@@ -140,6 +154,8 @@
 
     public async Task Close()
     {
+        await JS.InvokeVoidAsync("showModal", "kt_modal_new_target");
+
         StateHasChanged();
     }
 
@@ -158,7 +174,11 @@
             {
                 fileId = response.file_id.ToString();
                 sessionId = response.session_id;
-                questionAnswerPairs = response.question_answer_pairs.Where(s=>s.answer!=null).ToList();
+                questionAnswerPairs = response.question_answer_pairs.Where(s => s.answer != null).ToList();
+                
+            }
+            else
+            {
             }
         }
 
@@ -180,7 +200,8 @@
         if (success)
         {
             await JS.InvokeVoidAsync("alert", "Questions and answers saved successfully.");
-            string msg = "Successfully done";
+            await OnSubmit.InvokeAsync(true);
+            await Close();
         }
         else
         {

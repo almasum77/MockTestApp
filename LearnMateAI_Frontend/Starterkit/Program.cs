@@ -6,6 +6,7 @@ using Starterkit._keenthemes.libs;
 using Starterkit.Models;
 using Starterkit.Services;
 using MudBlazor.Services;
+using Blazored.Toast;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,7 @@ builder.Services.AddScoped<UserInfoContextService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<QuestionService>();
 builder.Services.AddScoped<TestService>();
+builder.Services.AddBlazoredToast();
 builder.Services.AddMudServices();
 
 var app = builder.Build();

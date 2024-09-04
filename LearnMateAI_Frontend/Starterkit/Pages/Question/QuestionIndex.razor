@@ -3,11 +3,14 @@
 
 @layout Layout.DefaultLightHeader;
 
+@using Blazored.Toast
 @using Starterkit.Models.Question
 @using Starterkit.Services
 @using Starterkit.Component
 
 @inject QuestionService _questionService
+@inject Blazored.Toast.Services.IToastService ToastService
+
 <style>
 	.mud-table-cell {
 		font-size: 1rem;
@@ -15,8 +18,9 @@
 </style>
 
 
+
 <MudThemeProvider></MudThemeProvider>
-<AddQuestionModal @ref="addQuestionModal" OnSubmit="AddQuestionModalAction"></AddQuestionModal>
+<AddQuestionModal @ref="addQuestionModal" OnSubmit="CallbackAction"></AddQuestionModal>
 <FileWiseQuestionsModal @ref="fileWiseQuestions"></FileWiseQuestionsModal>
 <AddTestModal @ref="addTestModal"></AddTestModal>
 
@@ -116,11 +120,16 @@
 	{
 		fileSummaries = await _questionService.GetFileQuestionSummariesAsync();
 		fileSummaries = fileSummaries.OrderByDescending(s => s.uploaddate).ToList();
+
+		ToastService.ShowSuccess("This is a success message!");
 	}
 
-	public async Task AddQuestionModalAction()
+	public async Task CallbackAction()
 	{
-		string msg = "Successfull";
+		fileSummaries = await _questionService.GetFileQuestionSummariesAsync();
+		fileSummaries = fileSummaries.OrderByDescending(s => s.uploaddate).ToList();
+
+		StateHasChanged();
 	}
 
 

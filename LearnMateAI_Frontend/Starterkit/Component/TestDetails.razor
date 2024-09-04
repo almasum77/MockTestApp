@@ -126,11 +126,14 @@
                                                         <td>
                                                             @if (question_type == Utilities.CommonConstants.QuestionType.TrueFalse.ToString())
                                                             {
-                                                                <span class="badge badge-light-@userAnswer.is_correct">@userAnswer.is_correct</span>
+                                                                <span class="@(userAnswer.is_correct.ToString().ToLower() == userAnswer.correct_answer.ToLower() ? "badge badge-light-success fs-base" : "badge badge-light-danger fs-base")">
+                                                                    @userAnswer.is_correct</span>
                                                             }
                                                             else if (question_type == Utilities.CommonConstants.QuestionType.FillInTheBlanks.ToString())
                                                             {
-                                                                @userAnswer.correct_answer
+                                                                <span class="@(userAnswer.user_answer == userAnswer.correct_answer? "badge badge-light-success fs-base" : "badge badge-light-danger fs-base")">
+                                                                @userAnswer.user_answer
+                                                                </span>
                                                             }
                                                         </td>
                                                         <td>
