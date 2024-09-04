@@ -15,7 +15,7 @@
         <div class="modal-content rounded">
             <!--begin::Modal header-->
             <div class="modal-header border-0 justify-content-end">
-                <div class="btn btn-sm btn-icon btn-light-danger" data-bs-dismiss="modal">
+                <div class="btn btn-sm btn-icon btn-light-danger" data-bs-dismiss="modal" @onclick="Close">
                     <span class="svg-icon svg-icon-1">
                         <!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -155,6 +155,8 @@
     public async Task Close()
     {
         await JS.InvokeVoidAsync("hideModal", "kt_modal_add_testy");
+        // results = new TestResult();
+
         StateHasChanged();
     }
 

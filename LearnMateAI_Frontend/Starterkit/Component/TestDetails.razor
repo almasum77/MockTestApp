@@ -123,7 +123,6 @@
                                                     <tr>
                                                         <td>@slNO</td>
                                                         <td>@userAnswer.question</td>
-                                                        <td>@userAnswer.user_answer</td>
                                                         <td>
                                                             @if (question_type == Utilities.CommonConstants.QuestionType.TrueFalse.ToString())
                                                             {
@@ -133,6 +132,9 @@
                                                             {
                                                                 @userAnswer.correct_answer
                                                             }
+                                                        </td>
+                                                        <td>
+                                                            @userAnswer.correct_answer
                                                         </td>
                                                     </tr>
                                                     slNO++;
@@ -168,13 +170,14 @@
 
     {
         testDetail = await _testService.GetTestDetailsAsync(TestId);
-        if (string.IsNullOrEmpty(testDetail.user_answers.Select(s => s.correct_answer).FirstOrDefault()))
+        bool? firstCorrectAns = testDetail.user_answers.Select(s => s.is_correct).FirstOrDefault();
+        if (firstCorrectAns != null)
         {
             question_type = Utilities.CommonConstants.QuestionType.TrueFalse.ToString();
         }
         else
         {
-            question_type = Utilities.CommonConstants.QuestionType.TrueFalse.ToString();
+            question_type = Utilities.CommonConstants.QuestionType.FillInTheBlanks.ToString();
         }
 
         // Fetch file content

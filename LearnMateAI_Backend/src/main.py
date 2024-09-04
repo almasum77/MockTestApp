@@ -576,8 +576,19 @@ async def submit_answers(
             
             if correct_answer:
                 if request.question_type == "TrueFalse":
-                    is_true = (answer.answer.lower() == "true") if answer.answer is not None else None
-                    if is_true == correct_answer.istrue:
+                    if answer.answer is not None:
+                        # Normalize the answer to ensure correct comparison
+                        normalized_answer = answer.answer.strip().lower()
+                        if normalized_answer == "true":
+                            is_true = True
+                        elif normalized_answer == "false":
+                            is_true = False
+                        else:
+                            is_true = None  # or handle as invalid input
+                    else:
+                        is_true = None
+
+                    if is_true is not None and is_true == correct_answer.istrue:
                         score += 1
 
                     db_user_answer = models.UserAnswer(
@@ -648,7 +659,7 @@ async def get_test_summaries(db: Session = Depends(get_db), current_user: User =
             UploadedFile.original_filename.label('filename')  # Fetch the filename from the UploadedFile table
         )
         .join(Result, UserTest.testid == Result.testid)
-        .join(UploadedFile, UserTest.fileid == UploadedFile.fileid)  # Join with the UploadedFile table
+        .join(UploadedFile, UserTest.fileid == UploadedFile.fileid)  
         .filter(UserTest.userid == current_user.userid)
         .all()
     )
@@ -662,7 +673,7 @@ async def get_test_summaries(db: Session = Depends(get_db), current_user: User =
             testno=summary.testno,
             userid=summary.userid,
             fileid=summary.fileid,
-            filename=summary.filename,  # Include the filename in the response
+            filename=summary.filename,  
             testdate=summary.testdate,
             score=summary.score,
             totalquestions=summary.totalquestions,

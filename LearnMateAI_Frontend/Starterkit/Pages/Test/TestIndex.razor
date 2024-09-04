@@ -111,6 +111,8 @@
 	protected override async Task OnInitializedAsync()
 	{
 		testSummaries = await _testService.GetTestSummariesAsync();
+		testSummaries = testSummaries.OrderByDescending(s => s.testdate).ToList();
+
 	}
 
 
